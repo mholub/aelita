@@ -1,8 +1,8 @@
 mod commands;
 
 use std::{io, vec};
-use dialoguer::{Input, Select, console::Term, theme::ColorfulTheme};
-use clap::{App, Arg, ArgMatches, Clap, IntoApp, Subcommand};
+use dialoguer::{Confirm, Input, Select, console::Term, theme::ColorfulTheme};
+use clap::{App, Arg, ArgMatches, ArgSettings, Clap, IntoApp, Subcommand};
 use commands::*;
 
 #[macro_use]
@@ -16,7 +16,8 @@ trait_enum! {
     #[derive(Clap, Debug)]
     enum Command: Executable {
         Command1,
-        Command2
+        Command2,
+        RunUnitTests
     }
 }
 
@@ -49,27 +50,35 @@ fn interactive_fill_command_arguments(app: &mut App) -> Result<Option<Command>, 
     let arguments = app.get_arguments().collect::<Vec<_>>();
 
     if arguments.len() > 0 {
-        println!("\n{}\n", app.clone().generate_usage());
+        println!();
+        app.clone().print_help();
+        println!();
     }
     
-    let mut filled_args: Vec<String> = vec![];
+    let mut filled_args: Vec<String> = vec![app.get_name().to_owned()];
 
     for arg in arguments {
-        let input : String = Input::new()
+        if arg.is_set(ArgSettings::TakesValue) {
+            let input : String = Input::new()
             .with_prompt(format!("Please provide {}", arg.get_name()))
             .interact_text()?;
 
-        filled_args.push(format!("--{}", arg.get_name()));
-        filled_args.push(input);
+            filled_args.push(format!("--{}", arg.get_name()));
+            filled_args.push(input);
+        } else {
+            if Confirm::new().with_prompt(format!("{}?", arg.get_about().unwrap_or(arg.get_name()))).interact()? {
+                filled_args.push(format!("--{}", arg.get_long().unwrap().to_owned()));
+            }
+        }
     }
 
-    //println!("Args: {:?}", filled_args);
+  //  println!("Args: {:?}", filled_args);
 
     let matches = app.try_get_matches_from_mut(filled_args).map_err(|clap_error| 
         io::Error::new(io::ErrorKind::Other, clap_error.to_string()))?;
 
     let command = Command::from_subcommand(Some((app.get_name(), &matches)));
-
+//    println!("Command: {:?}", command);
     Ok(command)
 }
 
