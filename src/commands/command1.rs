@@ -2,6 +2,7 @@ use clap::{App, Arg, ArgMatches, Clap, IntoApp, Subcommand};
 
 use crate::Executable;
 #[derive(Clap, Debug)]
+#[clap(about = "Test command, does nothing useful, has argument")]
 pub struct Command1 {
     name: String
 }

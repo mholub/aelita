@@ -5,6 +5,7 @@ use indicatif::ProgressBar;
 
 use crate::Executable;
 #[derive(Clap, Debug)]
+#[clap(about = "Runs fake unit tests")]
 pub struct RunUnitTests {
     #[clap(short, long, about = "Run all tests (takes longer time)")]
     all_tests: bool
